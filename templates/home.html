@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Butter And Bliss</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<header>
+    <h1>Butter And Bliss</h1>
+
+    {% if user.is_authenticated %}
+        <a href="{% url 'logout' %}">Logout</a> | 
+        <a href="{% url 'add_product' %}">Add Product</a> |
+        <a href="{% url 'product_list' %}">Product List</a> |
+        <a href="{% url 'cart' %}">Cart ({{ cart_count }})</a>
+    {% else %}
+        <a href="{% url 'login' %}">Login</a>
+    {% endif %}
+</header>
+
+<section class="products">
+    {% for item in products %}
+        <div class="product-card">
+            {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+            {% endif %}
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description }}</p>
+            <span class="price">Rs.{{ item.price }}</span>
+
+            {% if user.is_authenticated %}
+                <a class="cart-btn" href="{% url 'add_to_cart' item.id %}">Add to Cart</a>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p>No products available.</p>
+    {% endfor %}
+</section>
+
+</body>
+</html>
