@@ -26,15 +26,12 @@ def add_product(request):
     return render(request, 'add_product.html', {'form': form})
 
 
-# LOGOUT → redirect to login page
 def logout_view(request):
     logout(request)
     return redirect("login")
 
 
-# -------------------------
-# ADD TO CART
-# -------------------------
+
 @login_required
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -61,17 +58,12 @@ def cart(request):
         "total": total
     })
 
-# ----------------------------------------------------
-# REMOVE FROM CART
-# ----------------------------------------------------
 @login_required
 def remove_from_cart(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, user=request.user)
     item.delete()
     return redirect("cart")
-# ----------------------------------------------------
-# INCREASE QUANTITY
-# ----------------------------------------------------
+
 @login_required
 def increase_qty(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, user=request.user)
@@ -80,9 +72,6 @@ def increase_qty(request, item_id):
     return redirect("cart")
 
 
-# ----------------------------------------------------
-# DECREASE QUANTITY
-# ----------------------------------------------------
 @login_required
 def decrease_qty(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, user=request.user)
@@ -101,7 +90,7 @@ from django.shortcuts import get_object_or_404
 def delete_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     product.delete()
-    return redirect("product_list")   # Redirect anywhere you like
+    return redirect("product_list")   
 @login_required
 def edit_product(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -113,3 +102,8 @@ def edit_product(request, product_id):
     else:
         form = ProductForm(instance=product)
     return render(request, 'edit_product.html', {'form': form, 'product': product})
+
+
+def product_detail(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    return render(request, 'product_detail.html', {'product': product})

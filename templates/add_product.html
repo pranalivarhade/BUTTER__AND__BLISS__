@@ -1,9 +1,141 @@
-<h2>Add a Product</h2>
+﻿{% extends 'base.html' %}
 
-<form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Add Product</button>
-</form>
+{% block title %}Add Product — Butter And Bliss{% endblock %}
 
-<a href="{% url 'home' %}">Back to Home</a>
+{% block content %}
+    <section class="form-card">
+        <h2>Add a Product</h2>
+
+        <form method="POST" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="form-row">
+                <label for="id_name">{{ form.name.label }}:</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <div class="field-error">{{ form.name.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <label for="id_price">{{ form.price.label }}:</label>
+                {{ form.price }}
+                {% if form.price.errors %}
+                    <div class="field-error">{{ form.price.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <label for="id_description">{{ form.description.label }}:</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="field-error">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <label for="id_image">{{ form.image.label }}:</label>
+                <div class="dropzone" id="dropzone">
+                    <p>Drag & drop an image here, or click to choose a file</p>
+                    {{ form.image }}
+                </div>
+                {% if form.image.errors %}
+                    <div class="field-error">{{ form.image.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="image-preview" id="imagePreview">
+                <p>No image selected</p>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Add Product</button>
+                <a class="btn-link" href="{% url 'product_list' %}">Cancel</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+;(function(){
+    const fileInput = document.querySelector('input[name="image"]');
+    const preview = document.getElementById('imagePreview');
+    const dropzone = document.getElementById('dropzone');
+    const desc = document.querySelector('textarea[name="description"]');
+    const maxDesc = 1000;
+
+    function clearPreview(){ preview.innerHTML = '<p>No image selected</p>'; }
+    if(!fileInput || !preview || !dropzone) return;
+
+    // visually hide the native file input but keep it accessible
+    fileInput.style.position = 'absolute';
+    fileInput.style.left = '-9999px';
+
+    // make dropzone clickable
+    dropzone.addEventListener('click', function(){ fileInput.click(); });
+
+    function handleFile(file){
+        if(!file){ clearPreview(); return; }
+        if(!file.type.startsWith('image/')){ preview.innerHTML = '<p>Selected file is not an image</p>'; return; }
+        const img = document.createElement('img');
+        img.style.maxWidth = '320px';
+        img.style.maxHeight = '320px';
+        img.alt = 'Selected product image';
+        const reader = new FileReader();
+        reader.onload = function(ev){ preview.innerHTML = ''; img.src = ev.target.result; preview.appendChild(img); };
+        reader.readAsDataURL(file);
+    }
+
+    fileInput.addEventListener('change', function(e){
+        handleFile(this.files && this.files[0]);
+    });
+
+    // drag & drop handlers
+    ['dragenter','dragover'].forEach(evt => dropzone.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); this.classList.add('dragover'); }));
+    ['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, function(e){ e.preventDefault(); e.stopPropagation(); this.classList.remove('dragover'); }));
+    dropzone.addEventListener('drop', function(e){
+        const dt = e.dataTransfer;
+        if(!dt || !dt.files || !dt.files.length) return;
+        const file = dt.files[0];
+        try{ const dataTransfer = new DataTransfer(); dataTransfer.items.add(file); fileInput.files = dataTransfer.files; }catch(err){}
+        handleFile(file);
+    });
+
+    // description counter
+    if(desc){
+        const counter = document.createElement('div');
+        counter.className = 'char-count';
+        counter.textContent = `0 / ${maxDesc}`;
+        desc.parentNode.appendChild(counter);
+        desc.addEventListener('input', function(){
+            const len = this.value.length;
+            counter.textContent = `${len} / ${maxDesc}`;
+            if(len > maxDesc) counter.classList.add('over'); else counter.classList.remove('over');
+        });
+    }
+
+    // simple client-side validation
+    const form = document.querySelector('form');
+    if(form){
+        form.addEventListener('submit', function(e){
+            const name = (document.querySelector('input[name="name"]') || {}).value || '';
+            const priceRaw = (document.querySelector('input[name="price"]') || {}).value || '';
+            const price = parseFloat(priceRaw);
+            let errors = [];
+            if(!name.trim()) errors.push('Name is required.');
+            if(!priceRaw || Number.isNaN(price) || price < 0) errors.push('Price must be a non-negative number.');
+            if(errors.length){ e.preventDefault(); alert(errors.join('\n')); return false; }
+            return true;
+        });
+    }
+
+})();
+</script>
+{% endblock %}
